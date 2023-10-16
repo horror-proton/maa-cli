@@ -173,11 +173,20 @@ fn get_version_json(channel: Channel) -> Result<VersionJSON> {
         "https://ota.maa.plus/MaaAssistantArknights/api/version".to_owned()
     };
 
-    let url = format!("{}/{}.json", api_url, channel);
-    let version_json: VersionJSON = reqwest::blocking::get(url)
+    println!("{}", channel);
+    let url = api_url;
+    let detail: VersionDetails = reqwest::blocking::Client::new()
+        .get(url)
+        .header("User-Agent", "reqwest")
+        .send()
         .context("Failed to get version json")?
         .json()
         .context("Failed to parse version json")?;
+
+    let version_json: VersionJSON = VersionJSON {
+        version: detail.tag_name.to_owned(),
+        details: detail,
+    };
     Ok(version_json)
 }
 
@@ -190,7 +199,7 @@ pub struct VersionJSON {
 
 impl VersionJSON {
     pub fn version(&self) -> Version {
-        Version::parse(&self.version[1..]).unwrap()
+        Version::parse(&self.version[1..]).unwrap_or(Version::new(0, 0, 0))
     }
 
     pub fn version_str(&self) -> &str {
@@ -241,6 +250,7 @@ impl VersionJSON {
 #[cfg_attr(test, derive(Debug, PartialEq))]
 #[derive(Deserialize)]
 pub struct VersionDetails {
+    pub tag_name: String,
     pub assets: Vec<Asset>,
 }
 
@@ -250,6 +260,7 @@ pub struct Asset {
     pub name: String,
     pub size: u64,
     pub browser_download_url: String,
+    #[serde(default)]
     pub mirrors: Vec<String>,
 }
 

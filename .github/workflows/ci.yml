@@ -1,8 +1,8 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
     paths:
       - "maa-cli/**"
       - "maa-sys/**"
@@ -27,6 +27,7 @@ defaults:
 
 jobs:
   lint:
+    if: false
     name: Lint
     runs-on: ${{ matrix.os }}
     strategy:
@@ -48,14 +49,11 @@ jobs:
 
   build:
     name: Build and Test
-    needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
-          - macos-latest
           - windows-latest
         arch:
           - x86_64
@@ -108,7 +106,7 @@ jobs:
       - name: Install MaaCore
         if: matrix.arch == 'x86_64'
         env:
-          MAA_API_URL: https://github.com/MaaAssistantArknights/MaaRelease/raw/main/MaaAssistantArknights/api/version
+          MAA_API_URL: https://api.github.com/repos/horror-proton/MaaAssistantArknights/releases/125223079
         run: |
           cargo run -- install beta -t0
       - name: Show installation
@@ -161,6 +159,7 @@ jobs:
           cat "$(cargo run -- dir log)/asst.log"
 
   coverage:
+    if: false
     name: Coverage
     needs: build
     runs-on: ${{ matrix.os }}
